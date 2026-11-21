@@ -7,7 +7,7 @@ dengan `AsyncStorage`.
 ## Cara Mengisi
 
 1. Nyalakan backend Laravel: `php artisan serve --host=0.0.0.0 --port=8000`
-   (repo `https://github.com/Jri1810/Laravel-NOBP-20261`).
+   (repo `https://github.com/Jri1810/Laravel-2110040-20261`).
 2. Nyalakan aplikasi: `npx expo start`, lalu scan QR dengan **Expo Go** di HP
    (laptop & HP harus satu jaringan Wi-Fi; samakan IP di `src/config/api.ts` dengan `ipconfig`).
 3. Ambil screenshot **langsung dari HP** (bukan emulator browser).
