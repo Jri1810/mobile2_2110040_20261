@@ -54,7 +54,7 @@ src/
 
 Aplikasi ini memanggil REST API Laravel 13 + Sanctum. Backend berada pada repo terpisah:
 
-**https://github.com/Jri1810/Laravel-2110040-20261**
+**https://github.com/Jri1810/Laravel-NOBP-20261**
 
 Alamat server diatur di `src/config/api.ts`. Ganti IP dengan hasil `ipconfig`
 (Wi-Fi laptop) agar HP bisa mengakses server:
