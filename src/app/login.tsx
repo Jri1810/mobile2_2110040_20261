@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -13,29 +14,49 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { loginApi, saveAuthSession } from "@/services/authService";
 import { authStyles } from "@/styles/authStyles";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<"email" | "password" | null>(
     null,
   );
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert(
-        "Input Belum Lengkap",
-        "Silakan masukkan email dan password Anda.",
-      );
+      const message = "Silakan masukkan email dan password Anda.";
+      setErrorMessage(message);
+      Alert.alert("Input Belum Lengkap", message);
       return;
     }
 
-    router.replace({
-      pathname: "/home",
-      params: { email: email.trim() },
-    });
+    setErrorMessage(null);
+    setLoading(true);
+
+    try {
+      const result = await loginApi({
+        email: email.trim(),
+        password,
+      });
+
+      await saveAuthSession(result.user, result.token);
+      router.replace("/home");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan saat masuk ke akun.";
+
+      setErrorMessage(message);
+      Alert.alert("Login Gagal", message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -80,8 +101,12 @@ export default function LoginScreen() {
                   placeholderTextColor="#94A3B8"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!loading}
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    setErrorMessage(null);
+                  }}
                   onFocus={() => setFocusedField("email")}
                   onBlur={() => setFocusedField(null)}
                 />
@@ -109,8 +134,12 @@ export default function LoginScreen() {
                   placeholderTextColor="#94A3B8"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
+                  editable={!loading}
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    setErrorMessage(null);
+                  }}
                   onFocus={() => setFocusedField("password")}
                   onBlur={() => setFocusedField(null)}
                 />
@@ -128,13 +157,29 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity
-              style={authStyles.primaryButton}
+              style={[
+                authStyles.primaryButton,
+                loading && authStyles.primaryButtonDisabled,
+              ]}
               activeOpacity={0.85}
+              disabled={loading}
               onPress={handleLogin}
             >
-              <Text style={authStyles.primaryButtonText}>Masuk Sekarang</Text>
-              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <>
+                  <Text style={authStyles.primaryButtonText}>
+                    Masuk Sekarang
+                  </Text>
+                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                </>
+              )}
             </TouchableOpacity>
+
+            {errorMessage && (
+              <Text style={authStyles.feedbackError}>{errorMessage}</Text>
+            )}
 
             <View style={authStyles.dividerRow}>
               <View style={authStyles.dividerLine} />
@@ -144,7 +189,10 @@ export default function LoginScreen() {
 
             <View style={authStyles.footerRow}>
               <Text style={authStyles.footerText}>Belum punya akun?</Text>
-              <TouchableOpacity onPress={() => router.push("/register")}>
+              <TouchableOpacity
+                disabled={loading}
+                onPress={() => router.push("/register")}
+              >
                 <Text style={authStyles.footerLink}>Daftar Sekarang</Text>
               </TouchableOpacity>
             </View>

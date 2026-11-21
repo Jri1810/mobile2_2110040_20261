@@ -28,23 +28,43 @@ npx expo lint      # lint
 
 ```
 src/
+├── config/
+│   └── api.ts               # [Modul 11] BASE_URL & daftar endpoint Laravel
+├── services/
+│   └── authService.ts       # [Modul 11] fetch() + simpan/baca/hapus AsyncStorage
 ├── styles/
 │   ├── authStyles.ts        # StyleSheet Login & Register
 │   ├── homeStyles.ts        # StyleSheet dashboard marketplace
 │   └── tabStyles.ts         # StyleSheet bilah tab + kartu konten
 └── app/
     ├── _layout.tsx          # Root Stack (index, login, register, (tabs))
-    ├── index.tsx            # Redirect ke /login
-    ├── login.tsx            # Stack 1: Login
-    ├── register.tsx         # Stack 2: Register
+    ├── index.tsx            # Cek sesi AsyncStorage → /home atau /login
+    ├── login.tsx            # Login → loginApi() + saveAuthSession()
+    ├── register.tsx         # Register + Nomor HP → registerApi()
     └── (tabs)/
         ├── _layout.tsx      # Bottom Tabs 5 menu + useSafeAreaInsets
-        ├── home.tsx         # Beranda + 5 menu cepat marketplace
+        ├── home.tsx         # Beranda + nama/email asli dari AsyncStorage
         ├── produk.tsx       # Katalog produk
         ├── transaksi.tsx    # Kasir & transaksi
         ├── report.tsx       # Laporan penjualan
-        └── profil.tsx       # Profil + tombol Logout
+        └── profil.tsx       # Profil + Nomor HP + Logout ke server
 ```
+
+## Backend
+
+Aplikasi ini memanggil REST API Laravel 13 + Sanctum. Backend berada pada repo terpisah:
+
+**https://github.com/Jri1810/Laravel-2110040-20261**
+
+Alamat server diatur di `src/config/api.ts`. Ganti IP dengan hasil `ipconfig`
+(Wi-Fi laptop) agar HP bisa mengakses server:
+
+```ts
+export const API_BASE_URL = "http://192.168.1.119:8000/api";
+```
+
+Jalankan backend dengan `php artisan serve --host=0.0.0.0 --port=8000`.
+
 
 ## Alur Navigasi
 
@@ -66,3 +86,18 @@ src/
 | 5 layar tab (Home, Produk, Transaksi, Report, Profil) | Selesai | `src/app/(tabs)/*.tsx`      |
 | Grid 5 menu cepat marketplace                   | Selesai | `src/app/(tabs)/home.tsx`          |
 | Logout dipindah ke tab Profil                   | Selesai | `src/app/(tabs)/profil.tsx`        |
+
+## Cakupan Fitur Modul 11 (Sanctum + AsyncStorage)
+
+| Fitur                                                     | Status  | Berkas                              |
+|-----------------------------------------------------------|---------|-------------------------------------|
+| Pusat alamat API (`API_BASE_URL`, `API_ENDPOINTS`)        | Selesai | `src/config/api.ts`                 |
+| Layer API terpisah: `loginApi`, `registerApi`, `logoutApi` | Selesai | `src/services/authService.ts`       |
+| Helper sesi: `saveAuthSession`, `getAuthSession`, `clearAuthSession` | Selesai | `src/services/authService.ts` |
+| Parser error validasi 422 dari Laravel                    | Selesai | `src/services/authService.ts`       |
+| Cek sesi otomatis saat aplikasi dibuka (auto-login)        | Selesai | `src/app/index.tsx`                 |
+| Login mengirim `fetch()` + menyimpan token ke AsyncStorage | Selesai | `src/app/login.tsx`                 |
+| Register dengan input **Nomor HP** + kirim ke server       | Selesai | `src/app/register.tsx`              |
+| Home membaca nama & email asli dari AsyncStorage           | Selesai | `src/app/(tabs)/home.tsx`           |
+| Profil menampilkan Nomor HP + Logout hapus token di server | Selesai | `src/app/(tabs)/profil.tsx`         |
+| Style `primaryButtonDisabled` & `loadingContainer`         | Selesai | `src/styles/authStyles.ts`          |
