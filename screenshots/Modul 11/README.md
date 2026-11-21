@@ -72,8 +72,9 @@ Aplikasi ini memanggil REST API Laravel 13 + Sanctum yang berada pada repo terpi
 
 **https://github.com/Jri1810/Laravel-2110040-20261**
 
-Jika alamat IP laptop berubah, cukup sesuaikan satu baris pada `src/config/api.ts`:
+Jika alamat IP laptop berubah, cukup sesuaikan nilai `EXPO_PUBLIC_API_URL`
+pada berkas `.env.local` (salin dari `.env.example`):
 
-```ts
-export const API_BASE_URL = "http://192.168.100.46:8000/api";
+```env
+EXPO_PUBLIC_API_URL=http://<IPv4-LAPTOP>:8000/api
 ```

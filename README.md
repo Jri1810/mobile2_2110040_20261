@@ -56,11 +56,15 @@ Aplikasi ini memanggil REST API Laravel 13 + Sanctum. Backend berada pada repo t
 
 **https://github.com/Jri1810/Laravel-2110040-20261**
 
-Alamat server diatur di `src/config/api.ts`. Ganti IP dengan hasil `ipconfig`
-(Wi-Fi laptop) agar HP bisa mengakses server:
+Alamat server diatur lewat berkas `.env.local` (tidak ikut ke Git). Salin contohnya
+lalu isi IPv4 laptop dari perintah `ipconfig` (adapter Wi-Fi):
 
-```ts
-export const API_BASE_URL = "http://192.168.1.119:8000/api";
+```bash
+cp .env.example .env.local
+```
+
+```env
+EXPO_PUBLIC_API_URL=http://<IPv4-LAPTOP>:8000/api
 ```
 
 Jalankan backend dengan `php artisan serve --host=0.0.0.0 --port=8000`.

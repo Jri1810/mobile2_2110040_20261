@@ -1,6 +1,9 @@
-// Ganti alamat IP ini dengan IPv4 laptop Anda (cek lewat perintah 'ipconfig' di CMD)
-// Pastikan HP dan Laptop terhubung ke jaringan Wi-Fi yang sama.
-export const API_BASE_URL = "http://192.168.100.46:8000/api";
+// Alamat API diatur lewat berkas .env.local (tidak ikut ke Git).
+// Salin .env.example menjadi .env.local, lalu isi IPv4 laptop Anda
+// hasil perintah 'ipconfig' (adapter Wi-Fi).
+// Pastikan HP dan laptop terhubung ke jaringan Wi-Fi yang sama.
+export const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.15:8000/api";
 
 export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/login`,
