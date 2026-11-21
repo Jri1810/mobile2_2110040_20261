@@ -3,7 +3,7 @@
 // hasil perintah 'ipconfig' (adapter Wi-Fi).
 // Pastikan HP dan laptop terhubung ke jaringan Wi-Fi yang sama.
 export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? "http://192.168.1.15:8000/api";
+  process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
 export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/login`,
