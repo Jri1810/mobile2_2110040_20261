@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -16,11 +16,13 @@ import { homeStyles } from "@/styles/homeStyles";
 export default function HomeScreen() {
   const [user, setUser] = useState<UserData | null>(null);
 
-  useEffect(() => {
-    getAuthSession().then((session) => {
-      if (session) setUser(session.user);
-    });
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      getAuthSession().then((session) => {
+        if (session) setUser(session.user);
+      });
+    }, []),
+  );
 
   const handleMenuPress = (menuName: string, targetRoute?: string) => {
     if (targetRoute) {
