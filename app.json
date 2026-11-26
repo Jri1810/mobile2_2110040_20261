@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "2110040-Fajri",
+    "name": "2110040 - Fajri Dwiputra Yusditio",
     "slug": "minimarket",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -39,6 +39,14 @@
           "photosPermission": "Aplikasi membutuhkan akses galeri untuk memilih foto profil Anda.",
           "cameraPermission": "Aplikasi membutuhkan akses kamera untuk mengambil foto profil secara langsung.",
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Aplikasi membutuhkan akses kamera depan untuk mengambil foto profil Anda.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
         }
       ]
     ],

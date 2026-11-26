@@ -6,6 +6,9 @@ import { API_ENDPOINTS } from "@/config/api";
 
 const AUTH_TOKEN_KEY = "@minimarketapp_token";
 const AUTH_USER_KEY = "@minimarketapp_user";
+// 60 detik: hosting gratis (Render) butuh ~1 menit untuk bangun dari kondisi
+// idle/spin-down, jadi 20 detik terlalu pendek untuk request pertama.
+const REQUEST_TIMEOUT_MS = 60000;
 
 export interface UserData {
   id: number;
@@ -70,6 +73,28 @@ export interface PhotoUploadAsset {
   mimeType?: string | null;
 }
 
+function isConnectionError(error: unknown): boolean {
+  return (
+    error instanceof TypeError ||
+    (error instanceof Error && error.name === "AbortError")
+  );
+}
+
+async function fetchWithTimeout(
+  input: string,
+  init: RequestInit = {},
+  timeoutMs = REQUEST_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function handleApiResponse<T>(response: Response): Promise<T> {
   const data = await response.json().catch(() => null);
 
@@ -93,7 +118,7 @@ async function handleApiResponse<T>(response: Response): Promise<T> {
 
 export async function loginApi(payload: LoginPayload): Promise<AuthResponse> {
   try {
-    const response = await fetch(API_ENDPOINTS.LOGIN, {
+    const response = await fetchWithTimeout(API_ENDPOINTS.LOGIN, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -104,9 +129,9 @@ export async function loginApi(payload: LoginPayload): Promise<AuthResponse> {
 
     return await handleApiResponse<AuthResponse>(response);
   } catch (error) {
-    if (error instanceof TypeError) {
+    if (isConnectionError(error)) {
       throw new Error(
-        "Tidak dapat terhubung ke server Laravel. Pastikan server berjalan (--host=0.0.0.0) dan IP Wi-Fi sudah benar.",
+        "Tidak dapat terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.",
       );
     }
 
@@ -118,7 +143,7 @@ export async function registerApi(
   payload: RegisterPayload,
 ): Promise<AuthResponse> {
   try {
-    const response = await fetch(API_ENDPOINTS.REGISTER, {
+    const response = await fetchWithTimeout(API_ENDPOINTS.REGISTER, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -129,9 +154,9 @@ export async function registerApi(
 
     return await handleApiResponse<AuthResponse>(response);
   } catch (error) {
-    if (error instanceof TypeError) {
+    if (isConnectionError(error)) {
       throw new Error(
-        "Tidak dapat terhubung ke server Laravel. Periksa koneksi Wi-Fi dan alamat API_BASE_URL.",
+        "Tidak dapat terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.",
       );
     }
 
@@ -141,7 +166,7 @@ export async function registerApi(
 
 export async function logoutApi(token: string): Promise<void> {
   try {
-    await fetch(API_ENDPOINTS.LOGOUT, {
+    await fetchWithTimeout(API_ENDPOINTS.LOGOUT, {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -187,7 +212,7 @@ export async function clearAuthSession(): Promise<void> {
 // 5. Ambil Profil Terbaru dari Server Laravel
 export async function fetchProfileApi(token: string): Promise<ProfileResponse> {
   try {
-    const response = await fetch(API_ENDPOINTS.PROFILE, {
+    const response = await fetchWithTimeout(API_ENDPOINTS.PROFILE, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -196,9 +221,9 @@ export async function fetchProfileApi(token: string): Promise<ProfileResponse> {
     });
     return await handleApiResponse<ProfileResponse>(response);
   } catch (error) {
-    if (error instanceof TypeError) {
+    if (isConnectionError(error)) {
       throw new Error(
-        "Tidak dapat terhubung ke server Laravel. Periksa koneksi Wi-Fi Anda.",
+        "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
       );
     }
     throw error;
@@ -211,7 +236,7 @@ export async function updateProfileApi(
   payload: UpdateProfilePayload,
 ): Promise<ProfileResponse> {
   try {
-    const response = await fetch(API_ENDPOINTS.UPDATE_PROFILE, {
+    const response = await fetchWithTimeout(API_ENDPOINTS.UPDATE_PROFILE, {
       method: "PUT",
       headers: {
         Accept: "application/json",
@@ -222,9 +247,9 @@ export async function updateProfileApi(
     });
     return await handleApiResponse<ProfileResponse>(response);
   } catch (error) {
-    if (error instanceof TypeError) {
+    if (isConnectionError(error)) {
       throw new Error(
-        "Gagal menghubungi server saat menyimpan profil. Cek koneksi Wi-Fi.",
+        "Gagal menghubungi server saat menyimpan profil. Cek koneksi internet Anda.",
       );
     }
     throw error;
@@ -237,7 +262,7 @@ export async function updatePasswordApi(
   payload: UpdatePasswordPayload,
 ): Promise<BasicMessageResponse> {
   try {
-    const response = await fetch(API_ENDPOINTS.UPDATE_PASSWORD, {
+    const response = await fetchWithTimeout(API_ENDPOINTS.UPDATE_PASSWORD, {
       method: "PUT",
       headers: {
         Accept: "application/json",
@@ -248,9 +273,9 @@ export async function updatePasswordApi(
     });
     return await handleApiResponse<BasicMessageResponse>(response);
   } catch (error) {
-    if (error instanceof TypeError) {
+    if (isConnectionError(error)) {
       throw new Error(
-        "Gagal menghubungi server saat mengganti kata sandi. Cek koneksi Wi-Fi.",
+        "Gagal menghubungi server saat mengganti kata sandi. Cek koneksi internet Anda.",
       );
     }
     throw error;
@@ -273,7 +298,7 @@ export async function uploadProfilePhotoApi(
     const fileName = asset.fileName || `profile_${Date.now()}.${fallbackExt}`;
 
     if (Platform.OS === "web") {
-      const blobResponse = await fetch(asset.uri);
+      const blobResponse = await fetchWithTimeout(asset.uri);
       const blob = await blobResponse.blob();
       formData.append("foto", blob, fileName);
     } else {
@@ -283,20 +308,24 @@ export async function uploadProfilePhotoApi(
 
     // PENTING: Jangan menuliskan header "Content-Type" manual saat mengirim FormData,
     // karena fetch() akan otomatis membuat boundary multipart yang benar!
-    const response = await fetch(API_ENDPOINTS.UPDATE_PHOTO, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
+    const response = await fetchWithTimeout(
+      API_ENDPOINTS.UPDATE_PHOTO,
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
       },
-      body: formData,
-    });
+      60000,
+    );
 
     return await handleApiResponse<ProfileResponse>(response);
   } catch (error) {
-    if (error instanceof TypeError) {
+    if (isConnectionError(error)) {
       throw new Error(
-        "Gagal mengunggah foto ke server. Pastikan server menyala (--host=0.0.0.0).",
+        "Gagal mengunggah foto ke server. Periksa koneksi internet Anda.",
       );
     }
     throw error;

@@ -1,7 +1,7 @@
-// Alamat API diatur lewat berkas .env.local (tidak ikut ke Git).
-// Salin .env.example menjadi .env.local, lalu isi IPv4 laptop Anda
-// hasil perintah 'ipconfig' (adapter Wi-Fi).
-// Pastikan HP dan laptop terhubung ke jaringan Wi-Fi yang sama.
+// Alamat API diatur lewat variabel lingkungan EXPO_PUBLIC_API_URL.
+// - Saat development: isi di .env.local (tidak ikut ke Git).
+// - Saat build EAS: diisi lewat `eas env:set` pada environment production.
+// Contoh produksi: https://<nama-service>.onrender.com/api
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000/api";
 export const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");

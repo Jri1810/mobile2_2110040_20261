@@ -15,12 +15,16 @@ import {
   View,
 } from "react-native";
 
+import CameraCaptureModal, {
+  CapturedPhoto,
+} from "@/components/CameraCaptureModal";
 import { getStorageImageUrl } from "@/config/api";
 import {
   clearAuthSession,
   fetchProfileApi,
   getAuthSession,
   logoutApi,
+  PhotoUploadAsset,
   updatePasswordApi,
   updateProfileApi,
   updateStoredUser,
@@ -52,6 +56,7 @@ export default function ProfilScreen() {
 
   // State Upload Foto Profil
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [cameraVisible, setCameraVisible] = useState(false);
   const [loadingLogout, setLoadingLogout] = useState(false);
 
   const fillProfileForm = useCallback((u: UserData) => {
@@ -86,62 +91,27 @@ export default function ProfilScreen() {
     }, [fillProfileForm]),
   );
 
-  // Fungsi Pilih Foto: Kamera Langsung atau Galeri HP
-  const handlePickPhoto = async (source: "camera" | "gallery") => {
+  // Unggah foto hasil kamera atau galeri
+  const uploadPhotoAsset = async (
+    asset: PhotoUploadAsset & { fileSize?: number },
+  ) => {
+    if (asset.fileSize && asset.fileSize > MAX_PHOTO_BYTES) {
+      Alert.alert(
+        "Ukuran Foto Terlalu Besar",
+        "Ukuran maksimal foto yang diperbolehkan adalah 5 MB.",
+      );
+      return;
+    }
+
+    const session = await getAuthSession();
+    if (!session?.token) {
+      Alert.alert("Sesi Habis", "Silakan login kembali.");
+      router.replace("/login");
+      return;
+    }
+
+    setUploadingPhoto(true);
     try {
-      if (source === "camera") {
-        const perm = await ImagePicker.requestCameraPermissionsAsync();
-        if (!perm.granted) {
-          Alert.alert(
-            "Izin Kamera Ditolak",
-            "Aktifkan izin kamera pada pengaturan HP agar dapat mengambil foto.",
-          );
-          return;
-        }
-      } else {
-        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!perm.granted) {
-          Alert.alert(
-            "Izin Galeri Ditolak",
-            "Aktifkan izin galeri pada pengaturan HP untuk memilih foto.",
-          );
-          return;
-        }
-      }
-
-      const pickerOptions: ImagePicker.ImagePickerOptions = {
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.85,
-      };
-
-      const result =
-        source === "camera"
-          ? await ImagePicker.launchCameraAsync(pickerOptions)
-          : await ImagePicker.launchImageLibraryAsync(pickerOptions);
-
-      if (result.canceled || !result.assets?.[0]) {
-        return;
-      }
-
-      const asset = result.assets[0];
-      if (asset.fileSize && asset.fileSize > MAX_PHOTO_BYTES) {
-        Alert.alert(
-          "Ukuran Foto Terlalu Besar",
-          "Ukuran maksimal foto yang diperbolehkan adalah 5 MB.",
-        );
-        return;
-      }
-
-      const session = await getAuthSession();
-      if (!session?.token) {
-        Alert.alert("Sesi Habis", "Silakan login kembali.");
-        router.replace("/login");
-        return;
-      }
-
-      setUploadingPhoto(true);
       const res = await uploadProfilePhotoApi(session.token, {
         uri: asset.uri,
         fileName: asset.fileName,
@@ -163,6 +133,47 @@ export default function ProfilScreen() {
     } finally {
       setUploadingPhoto(false);
     }
+  };
+
+  // Fungsi Pilih Foto: Kamera Depan atau Galeri
+  const handlePickPhoto = async (source: "camera" | "gallery") => {
+    if (source === "camera") {
+      setCameraVisible(true);
+      return;
+    }
+
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert(
+          "Izin Galeri Ditolak",
+          "Aktifkan izin galeri pada pengaturan HP untuk memilih foto.",
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.85,
+      });
+
+      if (result.canceled || !result.assets?.[0]) {
+        return;
+      }
+
+      await uploadPhotoAsset(result.assets[0]);
+    } catch (error) {
+      const msg =
+        error instanceof Error ? error.message : "Gagal memilih foto profil.";
+      Alert.alert("Pilih Foto Gagal", msg);
+    }
+  };
+
+  const handleCapturedPhoto = (photo: CapturedPhoto) => {
+    setCameraVisible(false);
+    uploadPhotoAsset(photo);
   };
 
   // Fungsi Simpan Update Profil (Nama, Email, Nomor HP)
@@ -611,6 +622,12 @@ export default function ProfilScreen() {
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      <CameraCaptureModal
+        visible={cameraVisible}
+        onClose={() => setCameraVisible(false)}
+        onCaptured={handleCapturedPhoto}
+      />
     </KeyboardAvoidingView>
   );
 }
