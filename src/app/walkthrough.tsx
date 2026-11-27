@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -11,9 +10,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { getAuthSession } from "@/services/authService";
 import { colors, radius, shadow } from "@/styles/theme";
-
-const KEY_WALKTHROUGH = "@minimarketapp_walkthrough_done";
 
 type IoniconName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -80,10 +78,6 @@ const SLIDES: Slide[] = [
   },
 ];
 
-export async function sudahLihatWalkthrough(): Promise<boolean> {
-  return (await AsyncStorage.getItem(KEY_WALKTHROUGH)) === "1";
-}
-
 export default function WalkthroughScreen() {
   const { height } = Dimensions.get("window");
   // Layar pendek memakai ukuran ringkas agar semua poin tetap terlihat.
@@ -97,8 +91,10 @@ export default function WalkthroughScreen() {
   const terakhir = aktif === SLIDES.length - 1;
 
   const selesai = async () => {
-    await AsyncStorage.setItem(KEY_WALKTHROUGH, "1");
-    router.replace("/login");
+    // Perkenalan selalu tampil, jadi arah berikutnya mengikuti sesi tersimpan:
+    // pengguna yang masih masuk langsung ke beranda, sisanya ke halaman masuk.
+    const session = await getAuthSession();
+    router.replace(session?.token ? "/home" : "/login");
   };
 
   const lanjut = () => {

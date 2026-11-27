@@ -1,49 +1,13 @@
 import { Redirect } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
 
-import { sudahLihatWalkthrough } from "@/app/walkthrough";
-import { getAuthSession } from "@/services/authService";
-import { authStyles } from "@/styles/authStyles";
-import { colors } from "@/styles/theme";
-
+/**
+ * Titik masuk aplikasi.
+ *
+ * Layar perkenalan selalu ditampilkan setiap kali aplikasi dibuka, sesuai
+ * permintaan agar tautan aplikasi selalu menyapa pengguna lebih dulu.
+ * Setelah perkenalan selesai, walkthrough sendiri yang menentukan arah
+ * berikutnya (beranda bila sesi masih ada, atau halaman masuk).
+ */
 export default function Index() {
-  const [checking, setChecking] = useState(true);
-  const [tujuan, setTujuan] = useState<string>("/login");
-
-  useEffect(() => {
-    let alive = true;
-
-    (async () => {
-      // Perkenalan hanya tampil sekali, saat aplikasi pertama kali dibuka.
-      const sudah = await sudahLihatWalkthrough();
-      if (!alive) return;
-
-      if (!sudah) {
-        setTujuan("/walkthrough");
-        setChecking(false);
-        return;
-      }
-
-      const session = await getAuthSession();
-      if (!alive) return;
-
-      setTujuan(session?.token ? "/home" : "/login");
-      setChecking(false);
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  if (checking) {
-    return (
-      <View style={authStyles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  return <Redirect href={tujuan as never} />;
+  return <Redirect href="/walkthrough" />;
 }
