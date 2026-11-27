@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import CameraCaptureModal, {
   CapturedPhoto,
@@ -32,6 +33,7 @@ import {
   UserData,
 } from "@/services/authService";
 import { tabStyles } from "@/styles/tabStyles";
+import { colors } from "@/styles/theme";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5 MB
 
@@ -283,68 +285,78 @@ export default function ProfilScreen() {
   const photoUrl = getStorageImageUrl(user?.foto);
 
   return (
-    <KeyboardAvoidingView
-      style={tabStyles.screenContainer}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView
+    <SafeAreaView style={tabStyles.screenContainer} edges={["top"]}>
+      <KeyboardAvoidingView
         style={tabStyles.screenContainer}
-        contentContainerStyle={tabStyles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Kartu Header Avatar + Tombol Kamera & Galeri */}
+        <ScrollView
+          style={tabStyles.screenContainer}
+          contentContainerStyle={tabStyles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+        {/* Kartu header: sampul hijau + avatar + tombol foto */}
         <View style={tabStyles.profileHeaderCard}>
-          <View style={tabStyles.profileAvatar}>
-            {photoUrl ? (
-              <Image
-                source={{ uri: photoUrl }}
-                style={tabStyles.profileAvatarImage}
-                contentFit="cover"
-                transition={200}
-              />
-            ) : (
-              <Ionicons name="person" size={40} color="#2563EB" />
-            )}
-            {uploadingPhoto && (
-              <View style={tabStyles.avatarOverlayLoading}>
-                <ActivityIndicator color="#FFFFFF" />
-              </View>
-            )}
+          <View style={tabStyles.profileCover} />
+          <View style={tabStyles.profileBody}>
+            <View style={tabStyles.profileAvatar}>
+              {photoUrl ? (
+                <Image
+                  source={{ uri: photoUrl }}
+                  style={tabStyles.profileAvatarImage}
+                  contentFit="cover"
+                  transition={200}
+                />
+              ) : (
+                <Ionicons name="person" size={38} color={colors.primary} />
+              )}
+              {uploadingPhoto && (
+                <View style={tabStyles.avatarOverlayLoading}>
+                  <ActivityIndicator color={colors.inkOnDark} />
+                </View>
+              )}
+            </View>
+
+            <Text style={tabStyles.profileName}>
+              {user?.name || "Profil Pengguna"}
+            </Text>
+            <Text style={tabStyles.profileEmail}>{user?.email || "-"}</Text>
+
+            <View style={tabStyles.photoActionRow}>
+              <TouchableOpacity
+                style={tabStyles.photoActionButton}
+                activeOpacity={0.8}
+                disabled={uploadingPhoto}
+                onPress={() => handlePickPhoto("camera")}
+              >
+                <Ionicons
+                  name="camera-outline"
+                  size={17}
+                  color={colors.primary}
+                />
+                <Text style={tabStyles.photoActionButtonText}>Kamera</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={tabStyles.photoActionButton}
+                activeOpacity={0.8}
+                disabled={uploadingPhoto}
+                onPress={() => handlePickPhoto("gallery")}
+              >
+                <Ionicons
+                  name="images-outline"
+                  size={17}
+                  color={colors.primary}
+                />
+                <Text style={tabStyles.photoActionButtonText}>Galeri</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={tabStyles.photoHintText}>
+              JPG/PNG/WebP {"\u2022"} Maks 5 MB {"\u2022"} Otomatis dikonversi ke WebP ringan
+            </Text>
           </View>
-
-          <Text style={tabStyles.sectionTitle}>
-            {user?.name || "Profil Pengguna"}
-          </Text>
-          <Text style={tabStyles.sectionSubtitle}>
-            {user?.email || "-"}
-          </Text>
-
-          <View style={tabStyles.photoActionRow}>
-            <TouchableOpacity
-              style={tabStyles.photoActionButton}
-              activeOpacity={0.8}
-              disabled={uploadingPhoto}
-              onPress={() => handlePickPhoto("camera")}
-            >
-              <Ionicons name="camera-outline" size={18} color="#2563EB" />
-              <Text style={tabStyles.photoActionButtonText}>Kamera</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={tabStyles.photoActionButton}
-              activeOpacity={0.8}
-              disabled={uploadingPhoto}
-              onPress={() => handlePickPhoto("gallery")}
-            >
-              <Ionicons name="images-outline" size={18} color="#2563EB" />
-              <Text style={tabStyles.photoActionButtonText}>Galeri</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={tabStyles.photoHintText}>
-            JPG/PNG/WebP {"\u2022"} Maks 5 MB {"\u2022"} Otomatis dikonversi ke WebP ringan
-          </Text>
         </View>
 
         {/* Switcher 2 Tab: Data Profil & Ganti Sandi */}
@@ -359,7 +371,7 @@ export default function ProfilScreen() {
             <Ionicons
               name="person-circle-outline"
               size={18}
-              color={activeTab === "profil" ? "#2563EB" : "#64748B"}
+              color={activeTab === "profil" ? colors.primary : colors.inkFaint}
             />
             <Text
               style={[
@@ -381,7 +393,7 @@ export default function ProfilScreen() {
             <Ionicons
               name="key-outline"
               size={18}
-              color={activeTab === "password" ? "#2563EB" : "#64748B"}
+              color={activeTab === "password" ? colors.primary : colors.inkFaint}
             />
             <Text
               style={[
@@ -403,13 +415,13 @@ export default function ProfilScreen() {
                 <Ionicons
                   name="person-outline"
                   size={18}
-                  color="#64748B"
+                  color={colors.inkFaint}
                   style={tabStyles.inputIcon}
                 />
                 <TextInput
                   style={tabStyles.textInput}
                   placeholder="Nama lengkap Anda"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   editable={!savingProfile}
                   value={name}
                   onChangeText={setName}
@@ -423,13 +435,13 @@ export default function ProfilScreen() {
                 <Ionicons
                   name="mail-outline"
                   size={18}
-                  color="#64748B"
+                  color={colors.inkFaint}
                   style={tabStyles.inputIcon}
                 />
                 <TextInput
                   style={tabStyles.textInput}
                   placeholder="nama@kampus.ac.id"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   editable={!savingProfile}
@@ -445,13 +457,13 @@ export default function ProfilScreen() {
                 <Ionicons
                   name="call-outline"
                   size={18}
-                  color="#64748B"
+                  color={colors.inkFaint}
                   style={tabStyles.inputIcon}
                 />
                 <TextInput
                   style={tabStyles.textInput}
                   placeholder="081234567890"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   keyboardType="phone-pad"
                   editable={!savingProfile}
                   value={noHp}
@@ -470,10 +482,10 @@ export default function ProfilScreen() {
               onPress={handleSaveProfile}
             >
               {savingProfile ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={colors.inkOnDark} />
               ) : (
                 <>
-                  <Ionicons name="save-outline" size={18} color="#FFFFFF" />
+                  <Ionicons name="save-outline" size={18} color={colors.inkOnDark} />
                   <Text style={tabStyles.saveButtonText}>
                     Simpan Perubahan Profil
                   </Text>
@@ -489,13 +501,13 @@ export default function ProfilScreen() {
                 <Ionicons
                   name="lock-closed-outline"
                   size={18}
-                  color="#64748B"
+                  color={colors.inkFaint}
                   style={tabStyles.inputIcon}
                 />
                 <TextInput
                   style={tabStyles.textInput}
                   placeholder="Masukkan kata sandi lama"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   secureTextEntry={!showCurrent}
                   autoCapitalize="none"
                   editable={!savingPassword}
@@ -509,7 +521,7 @@ export default function ProfilScreen() {
                   <Ionicons
                     name={showCurrent ? "eye-off-outline" : "eye-outline"}
                     size={18}
-                    color="#64748B"
+                    color={colors.inkFaint}
                   />
                 </TouchableOpacity>
               </View>
@@ -521,13 +533,13 @@ export default function ProfilScreen() {
                 <Ionicons
                   name="key-outline"
                   size={18}
-                  color="#64748B"
+                  color={colors.inkFaint}
                   style={tabStyles.inputIcon}
                 />
                 <TextInput
                   style={tabStyles.textInput}
                   placeholder="Minimal 6 karakter"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   secureTextEntry={!showNew}
                   autoCapitalize="none"
                   editable={!savingPassword}
@@ -541,7 +553,7 @@ export default function ProfilScreen() {
                   <Ionicons
                     name={showNew ? "eye-off-outline" : "eye-outline"}
                     size={18}
-                    color="#64748B"
+                    color={colors.inkFaint}
                   />
                 </TouchableOpacity>
               </View>
@@ -553,13 +565,13 @@ export default function ProfilScreen() {
                 <Ionicons
                   name="checkmark-circle-outline"
                   size={18}
-                  color="#64748B"
+                  color={colors.inkFaint}
                   style={tabStyles.inputIcon}
                 />
                 <TextInput
                   style={tabStyles.textInput}
                   placeholder="Ulangi kata sandi baru"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   secureTextEntry={!showConfirm}
                   autoCapitalize="none"
                   editable={!savingPassword}
@@ -573,7 +585,7 @@ export default function ProfilScreen() {
                   <Ionicons
                     name={showConfirm ? "eye-off-outline" : "eye-outline"}
                     size={18}
-                    color="#64748B"
+                    color={colors.inkFaint}
                   />
                 </TouchableOpacity>
               </View>
@@ -589,13 +601,13 @@ export default function ProfilScreen() {
               onPress={handleSavePassword}
             >
               {savingPassword ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={colors.inkOnDark} />
               ) : (
                 <>
                   <Ionicons
                     name="shield-checkmark-outline"
                     size={18}
-                    color="#FFFFFF"
+                    color={colors.inkOnDark}
                   />
                   <Text style={tabStyles.saveButtonText}>
                     Perbarui Kata Sandi
@@ -613,10 +625,10 @@ export default function ProfilScreen() {
           disabled={loadingLogout}
         >
           {loadingLogout ? (
-            <ActivityIndicator color="#DC2626" />
+            <ActivityIndicator color={colors.dangerInk} />
           ) : (
             <>
-              <Ionicons name="log-out-outline" size={20} color="#DC2626" />
+              <Ionicons name="log-out-outline" size={20} color={colors.dangerInk} />
               <Text style={tabStyles.logoutButtonText}>Keluar dari Akun</Text>
             </>
           )}
@@ -628,6 +640,7 @@ export default function ProfilScreen() {
         onClose={() => setCameraVisible(false)}
         onCaptured={handleCapturedPhoto}
       />
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

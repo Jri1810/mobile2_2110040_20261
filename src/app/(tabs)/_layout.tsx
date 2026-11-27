@@ -42,6 +42,7 @@ export default function TabsLayout() {
         headerTintColor: tabNavColors.headerTint,
         headerTitleStyle: tabStyles.headerTitleStyle,
         headerShadowVisible: false,
+        headerShown: false,
       }}
     >
       <Tabs.Screen

@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { registerApi } from "@/services/authService";
 import { authStyles } from "@/styles/authStyles";
+import { colors } from "@/styles/theme";
 
 export default function RegisterScreen() {
   const [nama, setNama] = useState("");
@@ -113,21 +114,22 @@ export default function RegisterScreen() {
             disabled={loading}
             onPress={() => router.back()}
           >
-            <Ionicons name="arrow-back" size={20} color="#0F172A" />
+            <Ionicons name="arrow-back" size={20} color={colors.ink} />
           </TouchableOpacity>
 
           <View style={authStyles.headerArea}>
             <View style={authStyles.logoBadge}>
-              <Ionicons name="person-add" size={28} color="#2563EB" />
+              <Ionicons name="person-add" size={26} color={colors.inkOnDark} />
             </View>
-            <Text style={authStyles.title}>Buat Akun Baru</Text>
+            <Text style={authStyles.eyebrow}>Minimarket · Pendaftaran</Text>
+            <Text style={authStyles.title}>Buat akun pengelola</Text>
             <Text style={authStyles.subtitle}>
-              Lengkapi data diri Anda untuk mendaftarkan akun pengelola
-              minimarket
+              Lengkapi data diri untuk mulai mengelola operasional toko.
             </Text>
           </View>
 
           <View style={authStyles.card}>
+            <View style={authStyles.tapeStripe} />
             <View style={authStyles.formGroup}>
               <Text style={authStyles.label}>Nama Lengkap</Text>
               <View
@@ -139,13 +141,13 @@ export default function RegisterScreen() {
                 <Ionicons
                   name="person-outline"
                   size={20}
-                  color={focusedField === "nama" ? "#2563EB" : "#64748B"}
+                  color={focusedField === "nama" ? colors.primary : colors.inkFaint}
                   style={authStyles.inputIcon}
                 />
                 <TextInput
                   style={authStyles.input}
                   placeholder="Contoh: Muhammad Rizki"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   editable={!loading}
                   value={nama}
                   onChangeText={(text) => {
@@ -169,13 +171,13 @@ export default function RegisterScreen() {
                 <Ionicons
                   name="mail-outline"
                   size={20}
-                  color={focusedField === "email" ? "#2563EB" : "#64748B"}
+                  color={focusedField === "email" ? colors.primary : colors.inkFaint}
                   style={authStyles.inputIcon}
                 />
                 <TextInput
                   style={authStyles.input}
                   placeholder="nama@minimarket.id"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   editable={!loading}
@@ -201,13 +203,13 @@ export default function RegisterScreen() {
                 <Ionicons
                   name="call-outline"
                   size={20}
-                  color={focusedField === "noHp" ? "#2563EB" : "#64748B"}
+                  color={focusedField === "noHp" ? colors.primary : colors.inkFaint}
                   style={authStyles.inputIcon}
                 />
                 <TextInput
                   style={authStyles.input}
                   placeholder="Contoh: 081234567890"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   keyboardType="phone-pad"
                   editable={!loading}
                   value={noHp}
@@ -233,13 +235,13 @@ export default function RegisterScreen() {
                 <Ionicons
                   name="lock-closed-outline"
                   size={20}
-                  color={focusedField === "password" ? "#2563EB" : "#64748B"}
+                  color={focusedField === "password" ? colors.primary : colors.inkFaint}
                   style={authStyles.inputIcon}
                 />
                 <TextInput
                   style={authStyles.input}
                   placeholder="Minimal 6 karakter"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   editable={!loading}
@@ -258,7 +260,7 @@ export default function RegisterScreen() {
                   <Ionicons
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
                     size={20}
-                    color="#64748B"
+                    color={colors.inkFaint}
                   />
                 </TouchableOpacity>
               </View>
@@ -279,13 +281,13 @@ export default function RegisterScreen() {
                 <Ionicons
                   name="checkmark-circle-outline"
                   size={20}
-                  color={focusedField === "confirm" ? "#2563EB" : "#64748B"}
+                  color={focusedField === "confirm" ? colors.primary : colors.inkFaint}
                   style={authStyles.inputIcon}
                 />
                 <TextInput
                   style={authStyles.input}
                   placeholder="Ulangi kata sandi"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   secureTextEntry={!showConfirm}
                   autoCapitalize="none"
                   editable={!loading}
@@ -304,7 +306,7 @@ export default function RegisterScreen() {
                   <Ionicons
                     name={showConfirm ? "eye-off-outline" : "eye-outline"}
                     size={20}
-                    color="#64748B"
+                    color={colors.inkFaint}
                   />
                 </TouchableOpacity>
               </View>
@@ -320,11 +322,11 @@ export default function RegisterScreen() {
               onPress={handleRegister}
             >
               {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={colors.inkOnDark} />
               ) : (
                 <>
                   <Text style={authStyles.primaryButtonText}>Daftar Akun</Text>
-                  <Ionicons name="checkmark" size={19} color="#FFFFFF" />
+                  <Ionicons name="checkmark" size={19} color={colors.inkOnDark} />
                 </>
               )}
             </TouchableOpacity>

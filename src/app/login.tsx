@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { loginApi, saveAuthSession } from "@/services/authService";
 import { authStyles } from "@/styles/authStyles";
+import { colors } from "@/styles/theme";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -31,7 +31,6 @@ export default function LoginScreen() {
     if (!email.trim() || !password.trim()) {
       const message = "Silakan masukkan email dan password Anda.";
       setErrorMessage(message);
-      Alert.alert("Input Belum Lengkap", message);
       return;
     }
 
@@ -39,21 +38,15 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      const result = await loginApi({
-        email: email.trim(),
-        password,
-      });
-
+      const result = await loginApi({ email: email.trim(), password });
       await saveAuthSession(result.user, result.token);
       router.replace("/home");
     } catch (error) {
-      const message =
+      setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Terjadi kesalahan saat masuk ke akun.";
-
-      setErrorMessage(message);
-      Alert.alert("Login Gagal", message);
+          : "Terjadi kesalahan saat masuk ke akun.",
+      );
     } finally {
       setLoading(false);
     }
@@ -72,15 +65,18 @@ export default function LoginScreen() {
         >
           <View style={authStyles.headerArea}>
             <View style={authStyles.logoBadge}>
-              <Ionicons name="storefront" size={30} color="#2563EB" />
+              <Ionicons name="storefront" size={28} color={colors.inkOnDark} />
             </View>
-            <Text style={authStyles.title}>Selamat Datang</Text>
+            <Text style={authStyles.eyebrow}>Minimarket · Kasir</Text>
+            <Text style={authStyles.title}>Selamat datang kembali</Text>
             <Text style={authStyles.subtitle}>
-              Masuk ke akun Anda untuk mengelola operasional minimarket
+              Masuk untuk mengelola stok, transaksi, dan laporan toko Anda.
             </Text>
           </View>
 
           <View style={authStyles.card}>
+            <View style={authStyles.tapeStripe} />
+
             <View style={authStyles.formGroup}>
               <Text style={authStyles.label}>Alamat Email</Text>
               <View
@@ -91,14 +87,16 @@ export default function LoginScreen() {
               >
                 <Ionicons
                   name="mail-outline"
-                  size={20}
-                  color={focusedField === "email" ? "#2563EB" : "#64748B"}
+                  size={19}
+                  color={
+                    focusedField === "email" ? colors.primary : colors.inkFaint
+                  }
                   style={authStyles.inputIcon}
                 />
                 <TextInput
                   style={authStyles.input}
                   placeholder="nama@minimarket.id"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   editable={!loading}
@@ -124,14 +122,18 @@ export default function LoginScreen() {
               >
                 <Ionicons
                   name="lock-closed-outline"
-                  size={20}
-                  color={focusedField === "password" ? "#2563EB" : "#64748B"}
+                  size={19}
+                  color={
+                    focusedField === "password"
+                      ? colors.primary
+                      : colors.inkFaint
+                  }
                   style={authStyles.inputIcon}
                 />
                 <TextInput
                   style={authStyles.input}
                   placeholder="Masukkan kata sandi"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.inkFaint}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   editable={!loading}
@@ -146,11 +148,16 @@ export default function LoginScreen() {
                 <TouchableOpacity
                   style={authStyles.eyeButton}
                   onPress={() => setShowPassword(!showPassword)}
+                  accessibilityLabel={
+                    showPassword
+                      ? "Sembunyikan kata sandi"
+                      : "Tampilkan kata sandi"
+                  }
                 >
                   <Ionicons
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
-                    size={20}
-                    color="#64748B"
+                    size={19}
+                    color={colors.inkFaint}
                   />
                 </TouchableOpacity>
               </View>
@@ -166,13 +173,15 @@ export default function LoginScreen() {
               onPress={handleLogin}
             >
               {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={colors.inkOnDark} />
               ) : (
                 <>
-                  <Text style={authStyles.primaryButtonText}>
-                    Masuk Sekarang
-                  </Text>
-                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                  <Text style={authStyles.primaryButtonText}>Masuk</Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={18}
+                    color={colors.inkOnDark}
+                  />
                 </>
               )}
             </TouchableOpacity>
@@ -193,7 +202,7 @@ export default function LoginScreen() {
                 disabled={loading}
                 onPress={() => router.push("/register")}
               >
-                <Text style={authStyles.footerLink}>Daftar Sekarang</Text>
+                <Text style={authStyles.footerLink}>Daftar sekarang</Text>
               </TouchableOpacity>
             </View>
           </View>
