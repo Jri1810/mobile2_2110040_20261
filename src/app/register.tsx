@@ -81,9 +81,18 @@ export default function RegisterScreen() {
       });
 
       Alert.alert(
-        "Pendaftaran Berhasil!",
-        `Akun atas nama ${result.user.name} telah tersimpan ke database. Silakan masuk melalui halaman Login.`,
-        [{ text: "Ke Login", onPress: () => router.back() }],
+        "Pendaftaran Berhasil",
+        `Akun atas nama ${result.user.name} telah tersimpan. Silakan masuk.`,
+        [
+          {
+            text: "Masuk sekarang",
+            onPress: () =>
+              router.replace({
+                pathname: "/login",
+                params: { email: result.user.email },
+              } as never),
+          },
+        ],
       );
     } catch (error) {
       const message =

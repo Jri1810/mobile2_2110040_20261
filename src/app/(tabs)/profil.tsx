@@ -5,7 +5,6 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -19,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CameraCaptureModal, {
   CapturedPhoto,
 } from "@/components/CameraCaptureModal";
+import { showDialog } from "@/components/dialog";
 import { getStorageImageUrl } from "@/config/api";
 import {
   clearAuthSession,
@@ -98,16 +98,16 @@ export default function ProfilScreen() {
     asset: PhotoUploadAsset & { fileSize?: number },
   ) => {
     if (asset.fileSize && asset.fileSize > MAX_PHOTO_BYTES) {
-      Alert.alert(
-        "Ukuran Foto Terlalu Besar",
-        "Ukuran maksimal foto yang diperbolehkan adalah 5 MB.",
-      );
+      showDialog({
+        title: "Ukuran Foto Terlalu Besar",
+        message: "Ukuran maksimal foto yang diperbolehkan adalah 5 MB.",
+      });
       return;
     }
 
     const session = await getAuthSession();
     if (!session?.token) {
-      Alert.alert("Sesi Habis", "Silakan login kembali.");
+      showDialog({ title: "Sesi Habis", message: "Silakan login kembali." });
       router.replace("/login");
       return;
     }
@@ -122,16 +122,16 @@ export default function ProfilScreen() {
 
       fillProfileForm(res.user);
       await updateStoredUser(res.user);
-      Alert.alert(
-        "Berhasil",
-        res.message || "Foto profil berhasil diperbarui.",
-      );
+      showDialog({
+        title: "Berhasil",
+        message: res.message || "Foto profil berhasil diperbarui.",
+      });
     } catch (error) {
       const msg =
         error instanceof Error
           ? error.message
           : "Gagal mengunggah foto profil.";
-      Alert.alert("Upload Foto Gagal", msg);
+      showDialog({ title: "Upload Foto Gagal", message: msg });
     } finally {
       setUploadingPhoto(false);
     }
@@ -147,10 +147,10 @@ export default function ProfilScreen() {
     try {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) {
-        Alert.alert(
-          "Izin Galeri Ditolak",
-          "Aktifkan izin galeri pada pengaturan HP untuk memilih foto.",
-        );
+        showDialog({
+          title: "Izin Galeri Ditolak",
+          message: "Aktifkan izin galeri pada pengaturan HP untuk memilih foto.",
+        });
         return;
       }
 
@@ -169,7 +169,7 @@ export default function ProfilScreen() {
     } catch (error) {
       const msg =
         error instanceof Error ? error.message : "Gagal memilih foto profil.";
-      Alert.alert("Pilih Foto Gagal", msg);
+      showDialog({ title: "Pilih Foto Gagal", message: msg });
     }
   };
 
@@ -181,7 +181,7 @@ export default function ProfilScreen() {
   // Fungsi Simpan Update Profil (Nama, Email, Nomor HP)
   const handleSaveProfile = async () => {
     if (!name.trim() || !email.trim() || !noHp.trim()) {
-      Alert.alert("Input Belum Lengkap", "Nama, email, dan nomor HP wajib diisi.");
+      showDialog({ title: "Input Belum Lengkap", message: "Nama, email, dan nomor HP wajib diisi." });
       return;
     }
 
@@ -201,13 +201,16 @@ export default function ProfilScreen() {
 
       fillProfileForm(res.user);
       await updateStoredUser(res.user);
-      Alert.alert("Berhasil", res.message || "Profil berhasil diperbarui.");
+      showDialog({
+        title: "Berhasil",
+        message: res.message || "Profil berhasil diperbarui.",
+      });
     } catch (error) {
       const msg =
         error instanceof Error
           ? error.message
           : "Gagal memperbarui data profil.";
-      Alert.alert("Update Profil Gagal", msg);
+      showDialog({ title: "Update Profil Gagal", message: msg });
     } finally {
       setSavingProfile(false);
     }
@@ -216,26 +219,26 @@ export default function ProfilScreen() {
   // Fungsi Simpan Kata Sandi Baru
   const handleSavePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert(
-        "Input Belum Lengkap",
-        "Semua kolom kata sandi wajib diisi.",
-      );
+      showDialog({
+        title: "Input Belum Lengkap",
+        message: "Semua kolom kata sandi wajib diisi.",
+      });
       return;
     }
 
     if (newPassword.length < 6) {
-      Alert.alert(
-        "Kata Sandi Lemah",
-        "Kata sandi baru minimal terdiri dari 6 karakter.",
-      );
+      showDialog({
+        title: "Kata Sandi Lemah",
+        message: "Kata sandi baru minimal terdiri dari 6 karakter.",
+      });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert(
-        "Konfirmasi Tidak Cocok",
-        "Konfirmasi kata sandi baru tidak sama.",
-      );
+      showDialog({
+        title: "Konfirmasi Tidak Cocok",
+        message: "Konfirmasi kata sandi baru tidak sama.",
+      });
       return;
     }
 
@@ -256,30 +259,40 @@ export default function ProfilScreen() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      Alert.alert("Berhasil", res.message);
+      showDialog({ title: "Berhasil", message: res.message });
     } catch (error) {
       const msg =
         error instanceof Error
           ? error.message
           : "Gagal memperbarui kata sandi.";
-      Alert.alert("Ganti Kata Sandi Gagal", msg);
+      showDialog({ title: "Ganti Kata Sandi Gagal", message: msg });
     } finally {
       setSavingPassword(false);
     }
   };
 
   const handleLogout = async () => {
-    setLoadingLogout(true);
-    try {
-      const session = await getAuthSession();
-      if (session?.token) {
-        await logoutApi(session.token);
-      }
-      await clearAuthSession();
-      router.replace("/login");
-    } finally {
-      setLoadingLogout(false);
-    }
+    showDialog({
+      title: "Keluar dari akun?",
+      message: "Anda perlu masuk kembali untuk mengelola toko.",
+      icon: "log-out-outline",
+      destructive: true,
+      confirmLabel: "Keluar",
+      cancelLabel: "Batal",
+      onConfirm: async () => {
+        setLoadingLogout(true);
+        try {
+          const session = await getAuthSession();
+          if (session?.token) {
+            await logoutApi(session.token);
+          }
+          await clearAuthSession();
+          router.replace("/login");
+        } finally {
+          setLoadingLogout(false);
+        }
+      },
+    });
   };
 
   const photoUrl = getStorageImageUrl(user?.foto);

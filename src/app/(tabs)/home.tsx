@@ -2,22 +2,29 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
-  Alert,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { showDialog } from "@/components/dialog";
 import { getStorageImageUrl } from "@/config/api";
+import {
+  diskonPersen,
+  type IconName,
+  NOTIFIKASI,
+  PRODUK,
+  PRODUK_PROMO,
+  rupiah,
+} from "@/data/minimarket";
 import { getAuthSession, UserData } from "@/services/authService";
 import { homeStyles } from "@/styles/homeStyles";
 import { colors } from "@/styles/theme";
-
-type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
 type Kategori = {
   key: string;
@@ -62,46 +69,12 @@ const KATEGORI: Kategori[] = [
     border: colors.mintSoftBorder,
   },
   {
-    key: "kesehatan",
-    label: "Kesehatan",
-    icon: "medkit-outline",
+    key: "segar",
+    label: "Segar",
+    icon: "leaf-outline",
     color: colors.violet,
     bg: colors.violetSoft,
     border: colors.violetSoftBorder,
-  },
-];
-
-type ProdukPromo = {
-  id: string;
-  nama: string;
-  harga: number;
-  hargaAsli: number;
-  diskon: string;
-  rating: string;
-  thumbBg: string;
-  icon: IconName;
-};
-
-const PRODUK_PROMO: ProdukPromo[] = [
-  {
-    id: "p1",
-    nama: "Minyak Goreng 2L",
-    harga: 32000,
-    hargaAsli: 38000,
-    diskon: "16%",
-    rating: "4.8",
-    thumbBg: "#FFF4DE",
-    icon: "water-outline",
-  },
-  {
-    id: "p2",
-    nama: "Beras Premium 5kg",
-    harga: 68000,
-    hargaAsli: 72500,
-    diskon: "6%",
-    rating: "4.9",
-    thumbBg: "#E8EEFF",
-    icon: "nutrition-outline",
   },
 ];
 
@@ -141,10 +114,9 @@ const MENU: {
   },
 ];
 
-const rupiah = (v: number) => "Rp " + v.toLocaleString("id-ID");
-
 export default function HomeScreen() {
   const [user, setUser] = useState<UserData | null>(null);
+  const [cari, setCari] = useState("");
 
   useFocusEffect(
     useCallback(() => {
@@ -156,6 +128,17 @@ export default function HomeScreen() {
 
   const photoUrl = getStorageImageUrl(user?.foto);
   const firstName = (user?.name || "").split(" ")[0] || "Pengelola";
+  const belumDibaca = NOTIFIKASI.filter((n) => !n.dibaca).length;
+
+  const hasilCari = useMemo(() => {
+    const q = cari.trim().toLowerCase();
+    if (!q) return null;
+    return PRODUK.filter((p) => p.nama.toLowerCase().includes(q));
+  }, [cari]);
+
+  const bukaKategori = (label: string) => {
+    router.push(`/produk?kategori=${encodeURIComponent(label)}` as never);
+  };
 
   return (
     <SafeAreaView style={homeStyles.safeArea} edges={["top"]}>
@@ -163,6 +146,7 @@ export default function HomeScreen() {
         style={homeStyles.scrollContainer}
         contentContainerStyle={homeStyles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <LinearGradient
           colors={[colors.gradientStart, colors.gradientEnd]}
@@ -174,7 +158,11 @@ export default function HomeScreen() {
           <View style={homeStyles.headerDecoTwo} />
 
           <View style={homeStyles.headerTopRow}>
-            <View style={homeStyles.headerAvatar}>
+            <TouchableOpacity
+              style={homeStyles.headerAvatar}
+              onPress={() => router.push("/profil" as never)}
+              accessibilityLabel="Buka profil"
+            >
               {photoUrl ? (
                 <Image
                   source={{ uri: photoUrl }}
@@ -185,138 +173,276 @@ export default function HomeScreen() {
               ) : (
                 <Ionicons name="person" size={20} color={colors.inkOnDark} />
               )}
-            </View>
+            </TouchableOpacity>
             <View style={{ flex: 1 }}>
               <Text style={homeStyles.headerGreetingLabel}>Selamat datang</Text>
               <Text style={homeStyles.headerGreetingName} numberOfLines={1}>
                 {firstName}
               </Text>
             </View>
-            <TouchableOpacity style={homeStyles.headerIconButton}>
+            <TouchableOpacity
+              style={homeStyles.headerIconButton}
+              onPress={() => router.push("/notifikasi" as never)}
+              accessibilityLabel={`Notifikasi, ${belumDibaca} belum dibaca`}
+            >
               <Ionicons
                 name="notifications-outline"
                 size={19}
                 color={colors.inkOnDark}
               />
-              <View style={homeStyles.headerBadge} />
+              {belumDibaca > 0 && <View style={homeStyles.headerBadge} />}
             </TouchableOpacity>
           </View>
 
           <View style={homeStyles.searchBar}>
             <Ionicons name="search" size={17} color={colors.inkFaint} />
-            <Text style={homeStyles.searchPlaceholder}>
-              Cari produk atau nota
-            </Text>
-            <View style={homeStyles.searchDivider} />
-            <Ionicons name="options-outline" size={17} color={colors.primary} />
+            <TextInput
+              style={[homeStyles.searchPlaceholder, { paddingVertical: 0 }]}
+              placeholder="Cari produk atau nota"
+              placeholderTextColor={colors.inkFaint}
+              value={cari}
+              onChangeText={setCari}
+              returnKeyType="search"
+              autoCorrect={false}
+            />
+            {cari.length > 0 ? (
+              <TouchableOpacity
+                onPress={() => setCari("")}
+                accessibilityLabel="Hapus pencarian"
+              >
+                <Ionicons
+                  name="close-circle"
+                  size={17}
+                  color={colors.inkFaint}
+                />
+              </TouchableOpacity>
+            ) : (
+              <>
+                <View style={homeStyles.searchDivider} />
+                <TouchableOpacity
+                  onPress={() => router.push("/produk" as never)}
+                  accessibilityLabel="Buka katalog produk"
+                >
+                  <Ionicons
+                    name="options-outline"
+                    size={17}
+                    color={colors.primary}
+                  />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </LinearGradient>
 
         <View style={homeStyles.body}>
-          <View
-            style={[
-              homeStyles.promoCard,
-              { backgroundColor: colors.primaryDark },
-            ]}
-          >
-            <View style={homeStyles.promoDeco} />
-            <View style={homeStyles.promoTextWrap}>
-              <Text style={[homeStyles.promoKicker, { color: colors.accent }]}>
-                Promo hari ini
+          {hasilCari ? (
+            <View style={homeStyles.sectionBlock}>
+              <Text style={homeStyles.sectionTitle}>
+                Hasil pencarian “{cari}”
               </Text>
-              <Text style={[homeStyles.promoTitle, { color: colors.inkOnDark }]}>
-                Diskon sembako{"\n"}hingga 20%
-              </Text>
-              <Text
-                style={[homeStyles.promoBody, { color: colors.inkOnDarkMuted }]}
-              >
-                Berlaku sampai pukul 21.00 WIB
-              </Text>
-            </View>
-            <View style={homeStyles.promoBadge}>
-              <Ionicons name="pricetag" size={24} color={colors.inkOnDark} />
-            </View>
-          </View>
-
-          <View style={homeStyles.sectionBlock}>
-            <View style={homeStyles.sectionHeader}>
-              <Text style={homeStyles.sectionTitle}>Kategori</Text>
-              <Text style={homeStyles.sectionAction}>Lihat semua</Text>
-            </View>
-            <View style={homeStyles.kategoriGrid}>
-              {KATEGORI.map((k) => (
-                <TouchableOpacity
-                  key={k.key}
-                  style={homeStyles.kategoriItem}
-                  activeOpacity={0.7}
-                  onPress={() =>
-                    Alert.alert(
-                      k.label,
-                      `Filter kategori ${k.label} belum tersedia.`,
-                    )
-                  }
+              {hasilCari.length === 0 ? (
+                <Text
+                  style={{
+                    fontSize: 12.5,
+                    color: colors.inkMuted,
+                    marginTop: 8,
+                    lineHeight: 18,
+                  }}
                 >
-                  <View
-                    style={[
-                      homeStyles.kategoriIcon,
-                      { backgroundColor: k.bg, borderColor: k.border },
-                    ]}
+                  Tidak ada produk yang cocok. Coba kata lain atau buka katalog
+                  lengkap.
+                </Text>
+              ) : (
+                hasilCari.map((p) => (
+                  <TouchableOpacity
+                    key={p.id}
+                    onPress={() => router.push(`/produk/${p.id}` as never)}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 11,
+                      paddingVertical: 10,
+                      borderTopWidth: 1,
+                      borderTopColor: colors.border,
+                    }}
                   >
-                    <Ionicons name={k.icon} size={22} color={k.color} />
-                  </View>
-                  <Text style={homeStyles.kategoriLabel} numberOfLines={1}>
-                    {k.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <View>
-            <View style={homeStyles.sectionHeader}>
-              <Text style={homeStyles.sectionTitle}>Sedang Promo</Text>
-              <Text style={homeStyles.sectionAction}>Lihat semua</Text>
-            </View>
-            <View style={homeStyles.produkRow}>
-              {PRODUK_PROMO.map((p) => (
-                <TouchableOpacity
-                  key={p.id}
-                  style={homeStyles.produkCard}
-                  activeOpacity={0.8}
-                  onPress={() => router.push("/produk" as never)}
-                >
-                  <View
-                    style={[
-                      homeStyles.produkThumb,
-                      { backgroundColor: p.thumbBg },
-                    ]}
-                  >
-                    <Ionicons name={p.icon} size={32} color={colors.inkMuted} />
-                    <View style={homeStyles.produkDiscount}>
-                      <Text style={homeStyles.produkDiscountText}>
-                        {p.diskon}
-                      </Text>
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 12,
+                        backgroundColor: p.thumbBg,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Ionicons
+                        name={p.icon}
+                        size={20}
+                        color={colors.inkMuted}
+                      />
                     </View>
-                  </View>
-                  <View style={homeStyles.produkBody}>
-                    <Text style={homeStyles.produkName} numberOfLines={2}>
+                    <Text
+                      style={{
+                        flex: 1,
+                        fontSize: 13,
+                        fontWeight: "700",
+                        color: colors.ink,
+                      }}
+                      numberOfLines={1}
+                    >
                       {p.nama}
                     </Text>
-                    <Text style={homeStyles.produkPrice}>{rupiah(p.harga)}</Text>
-                    <Text style={homeStyles.produkOldPrice}>
-                      {rupiah(p.hargaAsli)}
+                    <Text
+                      style={{
+                        fontSize: 12.5,
+                        fontWeight: "800",
+                        color: colors.primary,
+                        fontVariant: ["tabular-nums"],
+                      }}
+                    >
+                      {rupiah(p.harga)}
                     </Text>
-                    <View style={homeStyles.produkRatingRow}>
-                      <Ionicons name="star" size={11} color={colors.accent} />
-                      <Text style={homeStyles.produkRatingText}>
-                        {p.rating}
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                ))
+              )}
             </View>
-          </View>
+          ) : (
+            <>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onPress={() => bukaKategori("Sembako")}
+                style={[
+                  homeStyles.promoCard,
+                  { backgroundColor: colors.primaryDark },
+                ]}
+              >
+                <View style={homeStyles.promoDeco} />
+                <View style={homeStyles.promoTextWrap}>
+                  <Text
+                    style={[homeStyles.promoKicker, { color: colors.accent }]}
+                  >
+                    Promo hari ini
+                  </Text>
+                  <Text
+                    style={[homeStyles.promoTitle, { color: colors.inkOnDark }]}
+                  >
+                    Diskon sembako{"\n"}hingga 20%
+                  </Text>
+                  <Text
+                    style={[
+                      homeStyles.promoBody,
+                      { color: colors.inkOnDarkMuted },
+                    ]}
+                  >
+                    Berlaku sampai pukul 21.00 WIB
+                  </Text>
+                </View>
+                <View style={homeStyles.promoBadge}>
+                  <Ionicons
+                    name="pricetag"
+                    size={24}
+                    color={colors.inkOnDark}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              <View style={homeStyles.sectionBlock}>
+                <View style={homeStyles.sectionHeader}>
+                  <Text style={homeStyles.sectionTitle}>Kategori</Text>
+                  <TouchableOpacity
+                    onPress={() => router.push("/produk" as never)}
+                  >
+                    <Text style={homeStyles.sectionAction}>Lihat semua</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={homeStyles.kategoriGrid}>
+                  {KATEGORI.map((k) => (
+                    <TouchableOpacity
+                      key={k.key}
+                      style={homeStyles.kategoriItem}
+                      activeOpacity={0.7}
+                      onPress={() => bukaKategori(k.label)}
+                    >
+                      <View
+                        style={[
+                          homeStyles.kategoriIcon,
+                          { backgroundColor: k.bg, borderColor: k.border },
+                        ]}
+                      >
+                        <Ionicons name={k.icon} size={22} color={k.color} />
+                      </View>
+                      <Text style={homeStyles.kategoriLabel} numberOfLines={1}>
+                        {k.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View>
+                <View style={homeStyles.sectionHeader}>
+                  <Text style={homeStyles.sectionTitle}>Sedang Promo</Text>
+                  <TouchableOpacity
+                    onPress={() => router.push("/produk" as never)}
+                  >
+                    <Text style={homeStyles.sectionAction}>Lihat semua</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={homeStyles.produkRow}>
+                  {PRODUK_PROMO.map((p) => (
+                    <TouchableOpacity
+                      key={p.id}
+                      style={homeStyles.produkCard}
+                      activeOpacity={0.8}
+                      onPress={() => router.push(`/produk/${p.id}` as never)}
+                    >
+                      <View
+                        style={[
+                          homeStyles.produkThumb,
+                          { backgroundColor: p.thumbBg },
+                        ]}
+                      >
+                        <Ionicons
+                          name={p.icon}
+                          size={32}
+                          color={colors.inkMuted}
+                        />
+                        <View style={homeStyles.produkDiscount}>
+                          <Text style={homeStyles.produkDiscountText}>
+                            {diskonPersen(p)}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={homeStyles.produkBody}>
+                        <Text style={homeStyles.produkName} numberOfLines={2}>
+                          {p.nama}
+                        </Text>
+                        <Text style={homeStyles.produkPrice}>
+                          {rupiah(p.harga)}
+                        </Text>
+                        {p.hargaAsli && (
+                          <Text style={homeStyles.produkOldPrice}>
+                            {rupiah(p.hargaAsli)}
+                          </Text>
+                        )}
+                        <View style={homeStyles.produkRatingRow}>
+                          <Ionicons
+                            name="star"
+                            size={11}
+                            color={colors.accent}
+                          />
+                          <Text style={homeStyles.produkRatingText}>
+                            {p.rating}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </>
+          )}
 
           <View style={homeStyles.menuCard}>
             <View style={homeStyles.menuHeader}>
@@ -330,10 +456,11 @@ export default function HomeScreen() {
                 onPress={() =>
                   m.route
                     ? router.push(m.route as never)
-                    : Alert.alert(
-                        m.label,
-                        `Fitur ${m.label} akan tersedia pada modul berikutnya.`,
-                      )
+                    : showDialog({
+                        title: m.label,
+                        message: `Fitur ${m.label} akan tersedia pada modul berikutnya.`,
+                        icon: "construct-outline",
+                      })
                 }
               >
                 <View
